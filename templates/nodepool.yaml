@@ -1,0 +1,25 @@
+apiVersion: karpenter.sh/v1beta1
+kind: NodePool
+metadata:
+  name: ${node_pool_name}
+  namespace: ${namespace}
+spec:
+  disruption:
+    consolidationPolicy: ${consolidation_policy}
+    expireAfter: ${expire_after}
+  limits:
+    cpu: ${cpu_limit}
+  template:
+    spec:
+      nodeClassRef:
+        name: ${node_class_name}
+      requirements:
+        - key: "karpenter.k8s.aws/instance-category"
+          operator: In
+          values: ${jsonencode(instance_categories)}
+        - key: "kubernetes.io/arch"
+          operator: In
+          values: ${jsonencode(instance_arches)}
+        - key: "karpenter.k8s.aws/instance-cpu"
+          operator: In
+          values: ${jsonencode(instance_cpus)} 

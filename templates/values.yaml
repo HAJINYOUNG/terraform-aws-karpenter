@@ -1,0 +1,70 @@
+settings:
+  clusterName: ${cluster_name}
+  clusterEndpoint: ${cluster_endpoint}
+
+serviceAccount:
+  annotations:
+    eks.amazonaws.com/role-arn: ${iam_role_arn}
+    eks.amazonaws.com/compute-type: "fargate"
+  create: true
+  name: "${service_account}"
+
+controller:
+  resources:
+    requests:
+      cpu: "${controller_cpu}"
+      memory: "${controller_memory}"
+    limits:
+      cpu: "${controller_cpu}"
+      memory: "${controller_memory}"
+
+replicas: 2
+
+webhook:
+  enabled: true
+  port: 8443
+  hostNetwork: false
+  resources:
+    requests:
+      cpu: "${webhook_cpu}"
+      memory: "${webhook_memory}"
+    limits:
+      cpu: "${webhook_cpu}"
+      memory: "${webhook_memory}"
+  podLabels:
+    app.kubernetes.io/name: "karpenter"
+    app.kubernetes.io/component: "webhook"
+
+dnsPolicy: "ClusterFirst"
+
+podLabels:
+  app.kubernetes.io/instance: "karpenter"
+  app.kubernetes.io/name: "karpenter"
+  app.kubernetes.io/part-of: "karpenter"
+  app.kubernetes.io/component: "controller"
+  app.kubernetes.io/managed-by: "helm"
+
+podAnnotations:
+  scheduler.alpha.kubernetes.io/critical-pod: ""
+
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+    - weight: 100
+      podAffinityTerm:
+        labelSelector:
+          matchExpressions:
+          - key: app.kubernetes.io/name
+            operator: In
+            values:
+            - karpenter
+        topologyKey: kubernetes.io/hostname
+
+tolerations:
+  - key: "eks.amazonaws.com/compute-type"
+    operator: "Equal"
+    value: "fargate"
+    effect: "NoSchedule"
+
+nodeSelector:
+  eks.amazonaws.com/compute-type: "fargate" 
